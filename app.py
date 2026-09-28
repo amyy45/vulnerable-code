@@ -223,13 +223,6 @@ def login():
         response.headers["Cache-Control"] = "public, max-age=3600"
         return response
 
-    # INTENTIONAL LAB VULNERABILITY
-    # VULN-08: Credential Caching & Form Autocomplete Directive
-    # Response allows public caching and lacks Cache-Control: no-store
-    response = app.make_response(render_template("login.html"))
-    response.headers["Cache-Control"] = "public, max-age=3600"
-    return response
-
 
 @app.route("/logout")
 def logout():
@@ -462,8 +455,6 @@ def verify_recovery():
             flash("Invalid recovery verification code. Please check the code and try again.", "error")
             return render_template("verify_recovery.html", user=user)
 
-    return render_template("verify_recovery.html", user=user)
-
 
 @app.route("/reset-password", methods=["GET", "POST"])
 def reset_password():
@@ -557,7 +548,8 @@ def two_factor_view():
         if action == "verify_code":
             entered_code = request.form.get("code", "").strip()
             # Standard training code accepted: 123456
-            if entered_code == "123456" or entered_code == user["two_factor_secret"]:
+            # Neutralized static hardcoded bypass code
+            if entered_code and entered_code == user["two_factor_secret"]:
                 session["2fa_verified"] = True
                 session["2fa_required"] = False
                 flash("Two-factor code verified successfully. Authentication complete.", "success")
